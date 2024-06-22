@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "salvador-integra-api"
+version = "0.1.0"
+description = "API não-oficial de rotas de ônibus do sistema Integra do Município de Salvador"
+authors = ["Victor Raton <43411882+victorfernandesraton@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pdfplumber = "^0.11.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.1"
+mypy = "^1.10.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
