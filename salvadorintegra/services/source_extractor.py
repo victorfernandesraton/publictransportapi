@@ -1,9 +1,10 @@
 import io
 import re
 from abc import ABC, abstractmethod
+from typing import Dict, List
 
+import httpx
 import pdfplumber
-import requests
 
 
 class ServiceDownloader(ABC):
@@ -12,12 +13,11 @@ class ServiceDownloader(ABC):
         pass
 
 
-class ServiceDownloaderPDF:
-    def __init__(self, url: str):
-        self.url = url
+class ServiceDownloaderPDF(ServiceDownloader):
+    url = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf"
 
     def execute(self) -> bytes:
-        response = requests.get(self.url)
+        response = httpx.get(self.url)
         response.raise_for_status()
         return response.content
 
@@ -25,26 +25,26 @@ class ServiceDownloaderPDF:
 class SourceExtractor:
     def __init__(self, service_downloader: ServiceDownloader):
         self.service_downloader = service_downloader
-        self.routes: dict[str, list[str]] = {}
+        self.routes: Dict[str, List[str]] = {}
 
     def execute(self):
         pdf_content = self.service_downloader.execute()
-        table = self.__extract_tables_from_pdf(io.BytesIO(pdf_content))
-        self.routes = self.__parse_routes(table)
+        tables = self._extract_tables_from_pdf(io.BytesIO(pdf_content))
+        self.routes = self._parse_routes(tables)
 
     @staticmethod
-    def __extract_tables_from_pdf(pdf_content: io.BytesIO) -> list:
+    def _extract_tables_from_pdf(pdf_content: io.BytesIO) -> List[List[str]]:
         tables = []
         with pdfplumber.open(pdf_content) as pdf:
-            for _index, value in enumerate(pdf.pages):
-                inner_table = value.extract_table()
+            for page in pdf.pages[0:3]:
+                inner_table = page.extract_table()
                 if inner_table:
                     tables.extend(inner_table)
         return tables
 
     @staticmethod
-    def __parse_routes(table: list) -> dict:
-        routes: dict[str, list] = {}
+    def _parse_routes(table: List[List[str]]) -> Dict[str, List[str]]:
+        routes: Dict[str, List[str]] = {}
         regex_step = re.compile(r"(\d+°)")
         route_left = None
         route_right = None
