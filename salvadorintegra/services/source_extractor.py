@@ -1,6 +1,7 @@
 import io
 import re
 from abc import ABC, abstractmethod
+from itertools import tee
 from typing import Dict, List
 
 import httpx
@@ -36,7 +37,7 @@ class SourceExtractor:
     def _extract_tables_from_pdf(pdf_content: io.BytesIO) -> List[List[str]]:
         tables = []
         with pdfplumber.open(pdf_content) as pdf:
-            for page in pdf.pages[0:3]:
+            for page in pdf.pages:
                 inner_table = page.extract_table()
                 if inner_table:
                     tables.extend(inner_table)
@@ -49,12 +50,11 @@ class SourceExtractor:
         route_left = None
         route_right = None
 
-        for row in table:
-            if len(row) != 2:
-                continue
+        iter1, iter2 = tee(table)
 
-            left, right = row
+        valid_rows = filter(lambda row: len(row) == 2, iter1)
 
+        for left, right in valid_rows:
             if not right:
                 continue
 
