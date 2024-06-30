@@ -1,6 +1,5 @@
 import io
 import re
-from abc import ABC, abstractmethod
 from itertools import tee
 from typing import Dict, List
 
@@ -8,35 +7,19 @@ import httpx
 import pdfplumber
 
 
-class ServiceDownloader(ABC):
-    @abstractmethod
-    def execute(self) -> bytes:
-        pass
-
-
-class ServiceDownloaderPDF(ServiceDownloader):
-    url = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf"
-
-    def execute(self) -> bytes:
-        response = httpx.get(self.url)
+class SourceExtractor:
+    @staticmethod
+    def get_file_content_by_url(
+        url: str = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf",
+    ) -> bytes:
+        response = httpx.get(url)
         response.raise_for_status()
         return response.content
 
-
-class SourceExtractor:
-    def __init__(self, service_downloader: ServiceDownloader):
-        self.service_downloader = service_downloader
-        self.routes: Dict[str, List[str]] = {}
-
-    def execute(self):
-        pdf_content = self.service_downloader.execute()
-        tables = self._extract_tables_from_pdf(io.BytesIO(pdf_content))
-        self.routes = self._parse_routes(tables)
-
     @staticmethod
-    def _extract_tables_from_pdf(pdf_content: io.BytesIO) -> List[List[str]]:
+    def get_tables_from_bytes(data: bytes) -> List[List[str]]:
         tables = []
-        with pdfplumber.open(pdf_content) as pdf:
+        with pdfplumber.open(io.BytesIO(data)) as pdf:
             for page in pdf.pages:
                 inner_table = page.extract_table()
                 if inner_table:
@@ -44,7 +27,7 @@ class SourceExtractor:
         return tables
 
     @staticmethod
-    def _parse_routes(table: List[List[str]]) -> Dict[str, List[str]]:
+    def parse_tables_to_dict(table: List[List[str]]) -> Dict[str, List[str]]:
         routes: Dict[str, List[str]] = {}
         regex_step = re.compile(r"(\d+°)")
         route_left = None
@@ -53,11 +36,11 @@ class SourceExtractor:
         iter1, iter2 = tee(table)
 
         valid_rows = filter(lambda row: len(row) == 2, iter1)
+        valid_rows = filter(
+            lambda row: row[0] is not None and row[1] is not None, valid_rows
+        )
 
         for left, right in valid_rows:
-            if not right:
-                continue
-
             if not regex_step.search(left):
                 route_left = left
             elif route_left:
@@ -69,3 +52,8 @@ class SourceExtractor:
                 routes.setdefault(route_right, []).append(right)
 
         return routes
+
+    def execute(self) -> Dict[str, List[str]]:
+        content = self.get_file_content_by_url()
+        table = self.get_tables_from_bytes(content)
+        return self.parse_tables_to_dict(table)
