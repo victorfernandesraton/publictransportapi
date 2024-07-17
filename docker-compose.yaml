@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     container_name: salvador-integra-api-app
@@ -13,7 +11,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/mydatabase
     volumes:
-      - ./salvadorintegra:/salvadorintegra
+      - ./salvadorintegra/:/salvadorintegra
 
   db:
     container_name: salvador-integra-api-db
