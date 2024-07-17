@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: salvador-integra-api-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/mydatabase
+    volumes:
+      - ./salvadorintegra:/salvadorintegra
+
+  db:
+    container_name: salvador-integra-api-db
+    image: postgres
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+

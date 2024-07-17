@@ -1,7 +1,7 @@
 import io
 import re
 from itertools import tee
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import httpx
 import pdfplumber
@@ -22,38 +22,31 @@ class SourceExtractor:
         with pdfplumber.open(io.BytesIO(data)) as pdf:
             for page in pdf.pages:
                 inner_table = page.extract_table()
-                if inner_table:
+                if inner_table is not None:
                     tables.extend(inner_table)
         return tables
 
-    @staticmethod
-    def parse_tables_to_dict(table: List[List[str]]) -> Dict[str, List[str]]:
-        routes: Dict[str, List[str]] = {}
-        regex_step = re.compile(r"(\d+°)")
-        route_left = None
-        route_right = None
-
+    def split_tables(self, table: List[List[str]]) -> Tuple[List[str], list[str]]:
         iter1, iter2 = tee(table)
 
         valid_rows = filter(lambda row: len(row) == 2, iter1)
         valid_rows = filter(
             lambda row: row[0] is not None and row[1] is not None, valid_rows
         )
+        left_column = [row[0] for row in table if len(row) == 2 and row[0]]
+        right_column = [row[1] for row in table if len(row) == 2 and row[1]]
 
-        for left, right in valid_rows:
-            if not regex_step.search(left):
-                route_left = left
-            elif route_left:
-                routes.setdefault(route_left, []).append(left)
+        return left_column, right_column
 
-            if not regex_step.search(right):
-                route_right = right
-            elif route_right:
-                routes.setdefault(route_right, []).append(right)
+    @staticmethod
+    def parse_table_to_dict(rows) -> Dict[str, List[str]]:
+        result: Dict[str, list[str]] = {}
+        route = None
+        regex_step = re.compile(r"(\d+°)")
+        for row in rows:
+            if not regex_step.search(row):
+                route = row
+            elif route:
+                result.setdefault(route, []).append(row)
 
-        return routes
-
-    def execute(self) -> Dict[str, List[str]]:
-        content = self.get_file_content_by_url()
-        table = self.get_tables_from_bytes(content)
-        return self.parse_tables_to_dict(table)
+        return result
