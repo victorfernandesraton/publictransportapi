@@ -18,6 +18,7 @@ gunicorn = "^22.0.0"
 pytest = "^8.2.1"
 mypy = "^1.10.0"
 taskipy = "^1.13.0"
+ruff = "^0.5.2"
 
 
 
@@ -31,7 +32,14 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff.lint]
 # Enable the isort rules.
-extend-select = ["I"]
+preview = true
+extend-select = ["I", "F", "PT"]
+
+[tool.ruff]
+# Enable the isort rules.
+extend-exclude = ["salvadorintegra/migrations"]
 
 [tool.taskipy.tasks]
 run = { cmd = "uvicorn salvadorintegra.app:app --reload", help = "Run the API server" }
+lint = { cmd = "ruff check . && ruff check --diff", help = "Run the linter" }
+format = {cmd= "ruff check . --fix && ruff format .", help = "Run the formatter"}

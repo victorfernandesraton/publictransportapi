@@ -1,1 +1,1 @@
-from .source_extractor import SourceExtractor
+from .source_extractor import SourceExtractor as SourceExtractor

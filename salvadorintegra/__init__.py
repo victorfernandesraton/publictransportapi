@@ -1,1 +1,1 @@
-from .services import SourceExtractor
+from .services import SourceExtractor as SourceExtractor

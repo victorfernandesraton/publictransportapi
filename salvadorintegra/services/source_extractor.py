@@ -6,6 +6,8 @@ from typing import Dict, List, Tuple
 import httpx
 import pdfplumber
 
+TOTAL_COLUMNS = 2
+
 
 class SourceExtractor:
     @staticmethod
@@ -26,15 +28,16 @@ class SourceExtractor:
                     tables.extend(inner_table)
         return tables
 
-    def split_tables(self, table: List[List[str]]) -> Tuple[List[str], list[str]]:
-        iter1, iter2 = tee(table)
+    @staticmethod
+    def split_tables(table: List[List[str]]) -> Tuple[List[str], list[str]]:
+        iter1, _iter2 = tee(table)
 
-        valid_rows = filter(lambda row: len(row) == 2, iter1)
+        valid_rows = filter(lambda row: len(row) == TOTAL_COLUMNS, iter1)
         valid_rows = filter(
             lambda row: row[0] is not None and row[1] is not None, valid_rows
         )
-        left_column = [row[0] for row in table if len(row) == 2 and row[0]]
-        right_column = [row[1] for row in table if len(row) == 2 and row[1]]
+        left_column = [row[0] for row in table if len(row) == TOTAL_COLUMNS and row[0]]
+        right_column = [row[1] for row in table if len(row) == TOTAL_COLUMNS and row[1]]
 
         return left_column, right_column
 
