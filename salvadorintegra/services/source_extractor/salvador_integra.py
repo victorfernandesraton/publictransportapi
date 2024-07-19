@@ -1,18 +1,25 @@
 import io
 import re
+from hashlib import sha256
 from itertools import tee
 from typing import Dict, List, Tuple
 
 import httpx
 import pdfplumber
+from sqlalchemy.orm import Session
+
+from salvadorintegra.domain.sources import Source
 
 TOTAL_COLUMNS = 2
 
 
 class SourceExtractor:
+    def __init__(self, session: Session):
+        self.session = session
+
     @staticmethod
     def get_file_content_by_url(
-        url: str = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf",
+        url: str,
     ) -> bytes:
         response = httpx.get(url)
         response.raise_for_status()
@@ -41,6 +48,14 @@ class SourceExtractor:
 
         return left_column, right_column
 
+    def get_dict(self, data: bytes) -> Dict[str, List[str]]:
+        tables = self.get_tables_from_bytes(data)
+        left_column, right_column = self.split_tables(tables)
+        return {
+            **self.parse_table_to_dict(left_column),
+            **self.parse_table_to_dict(right_column),
+        }
+
     @staticmethod
     def parse_table_to_dict(rows) -> Dict[str, List[str]]:
         result: Dict[str, list[str]] = {}
@@ -53,3 +68,16 @@ class SourceExtractor:
                 result.setdefault(route, []).append(row)
 
         return result
+
+    def execute(self):
+        url = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf"
+        data = self.get_file_content_by_url(url)
+        source = Source(
+            url=url,
+            status=1,
+            city="Salvador",
+            system="Integra",
+            hash=sha256(data).hexdigest(),
+        )
+        self.session.add(source)
+        self.session.commit()
