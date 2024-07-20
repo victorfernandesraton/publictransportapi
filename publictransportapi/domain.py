@@ -7,14 +7,27 @@ table_registry = registry()
 
 
 @table_registry.mapped_as_dataclass
+class Systems:
+    __tablename__ = "systems"
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    city: Mapped[str] = mapped_column(nullable=False, index=True)
+    state: Mapped[str] = mapped_column(nullable=False, index=True)
+    country: Mapped[str] = mapped_column(nullable=False, index=True)
+    name: Mapped[str] = mapped_column(nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    updated_at: Mapped[datetime] = mapped_column(
+        default=datetime.utcnow(), onupdate=datetime.utcnow()
+    )
+
+
+@table_registry.mapped_as_dataclass
 class Source:
     __tablename__ = "sources"
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
     url: Mapped[str] = mapped_column(nullable=False, index=True)
-    city: Mapped[str] = mapped_column()
-    system: Mapped[str] = mapped_column(nullable=False, index=True)
     hash: Mapped[str] = mapped_column(nullable=False, unique=True)
+    system_id: Mapped[int] = mapped_column(ForeignKey("systems.id"))
     status: Mapped[int] = mapped_column(nullable=False, default=1)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
     updated_at: Mapped[datetime] = mapped_column(

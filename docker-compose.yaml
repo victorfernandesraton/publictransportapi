@@ -1,6 +1,8 @@
 services:
   app:
-    container_name: salvador-integra-api-app
+    container_name: public-transport-api-app
+    image: public-transport-api
+    entrypoint: ./entrypoint.sh
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,11 +12,9 @@ services:
       - db
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/mydatabase
-    volumes:
-      - ./salvadorintegra/:/salvadorintegra
 
   db:
-    container_name: salvador-integra-api-db
+    container_name: public-transport-api-db
     image: postgres
     environment:
       POSTGRES_DB: mydatabase

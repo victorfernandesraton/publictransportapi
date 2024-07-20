@@ -1,5 +1,6 @@
 import io
 import re
+from datetime import datetime
 from hashlib import sha256
 from itertools import tee
 from typing import Dict, List, Tuple
@@ -9,14 +10,15 @@ import pdfplumber
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from publictransportapi.domain import Source, TransportRoutes, TransportStops
+from publictransportapi.domain import Source, Systems, TransportRoutes, TransportStops
 
 TOTAL_COLUMNS = 2
 
 
 class SourceExtractor:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, system: Systems):
         self.session = session
+        self.system = system
 
     @staticmethod
     def get_file_content_by_url(
@@ -72,18 +74,20 @@ class SourceExtractor:
 
     def save_source(self, url: str, data: bytes) -> Source:
         hashData = sha256(data).hexdigest()
+
         source = Source(
             url=url,
-            city="Salvador",
-            system="Integra",
+            system_id=self.system.id,
             hash=hashData,
         )
         has_source = self.session.scalar(
             select(Source).where(
-                Source.hash == source.hash and Source.system == "Integra"
+                Source.hash == source.hash and Source.system_id == self.system.id
             )
         )
         if has_source:
+            has_source.updated_at = datetime.utcnow()
+            self.session.commit()
             return has_source
 
         self.session.add(source)
