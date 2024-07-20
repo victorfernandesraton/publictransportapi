@@ -6,9 +6,10 @@ from typing import Dict, List, Tuple
 
 import httpx
 import pdfplumber
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from salvadorintegra.domain.sources import Source
+from publictransportapi.domain import Source, TransportRoutes, TransportStops
 
 TOTAL_COLUMNS = 2
 
@@ -69,15 +70,56 @@ class SourceExtractor:
 
         return result
 
-    def execute(self):
-        url = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf"
-        data = self.get_file_content_by_url(url)
+    def save_source(self, url: str, data: bytes) -> Source:
+        hashData = sha256(data).hexdigest()
         source = Source(
             url=url,
-            status=1,
             city="Salvador",
             system="Integra",
-            hash=sha256(data).hexdigest(),
+            hash=hashData,
         )
+        has_source = self.session.scalar(
+            select(Source).where(
+                Source.hash == source.hash and Source.system == "Integra"
+            )
+        )
+        if has_source:
+            return has_source
+
         self.session.add(source)
+        self.session.commit()
+        return source
+
+    def save_transport_routes(self, url: str):
+        data = self.get_file_content_by_url(url)
+        source = self.save_source(url, data)
+        if not source:
+            raise ValueError("Source not found")
+        dict_data = self.get_dict(data)
+        for route, stops in dict_data.items():
+            result = re.search(r"(\d+)\s(-\s)?(.*)", route)
+            if not result:
+                raise Exception(f"Invalid route: {route}")
+            transport_routes = TransportRoutes(
+                code=int(result.group(1)),
+                label=route,
+                source_id=source.id,
+            )
+            self.session.add(transport_routes)
+            self.session.commit()
+
+        self.session.begin()
+        count = 0
+        for stop in stops:
+            try:
+                transport_stops = TransportStops(
+                    label=stop,
+                    order=count,
+                    route_id=transport_routes.id,
+                )
+                count += 1
+                self.session.add(transport_stops)
+            except Exception as e:
+                self.session.rollback()
+                raise e
         self.session.commit()
