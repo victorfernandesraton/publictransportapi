@@ -8,12 +8,10 @@ from publictransportapi.source_extractor.salvador_ba_integra import SourceExtrac
 
 def test_download_source(session, create_system):
     system = create_system
-    url = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf"
     service = SourceExtractor(session, system)
-    data = service.get_file_content_by_url(url)
-    source = service.save_source(url, data)
+    source = service.save_source()
     result = session.scalar(
-        select(Source).where(Source.hash == sha256(data).hexdigest())
+        select(Source).where(Source.hash == sha256(service.data).hexdigest())
     )
 
     assert result is not None
@@ -24,15 +22,17 @@ def test_download_source(session, create_system):
 # @pytest.mark.skip("Not implemented")
 def test_download_transport_routes(session, create_system):
     system = create_system
-    service = SourceExtractor(session, system)
 
-    url = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf"
-    service.save_transport_routes(url)
+    service = SourceExtractor(session, system)
+    source = service.save_source()
+    service.save_transport_routes(source)
 
     result = session.scalar(
         select(Source)
         .where(
-            Source.system_id == system.id and Source.status == 1 and Source.url == url
+            Source.system_id == system.id
+            and Source.status == 1
+            and Source.url == service.url
         )
         .order_by(Source.id.desc())
         .limit(1)

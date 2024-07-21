@@ -16,6 +16,9 @@ TOTAL_COLUMNS = 2
 
 
 class SourceExtractor:
+    url = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf"
+    data = bytes()
+
     def __init__(self, session: Session, system: Systems):
         self.session = session
         self.system = system
@@ -72,11 +75,12 @@ class SourceExtractor:
 
         return result
 
-    def save_source(self, url: str, data: bytes) -> Source:
-        hashData = sha256(data).hexdigest()
+    def save_source(self) -> Source:
+        self.data = self.get_file_content_by_url(self.url)
+        hashData = sha256(self.data).hexdigest()
 
         source = Source(
-            url=url,
+            url=self.url,
             system_id=self.system.id,
             hash=hashData,
         )
@@ -94,12 +98,8 @@ class SourceExtractor:
         self.session.commit()
         return source
 
-    def save_transport_routes(self, url: str):
-        data = self.get_file_content_by_url(url)
-        source = self.save_source(url, data)
-        if not source:
-            raise ValueError("Source not found")
-        dict_data = self.get_dict(data)
+    def save_transport_routes(self, source: Source):
+        dict_data = self.get_dict(self.data)
         for route, stops in dict_data.items():
             result = re.search(r"(\d+)\s(-\s)?(.*)", route)
             if not result:
