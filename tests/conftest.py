@@ -9,7 +9,7 @@ from publictransportapi.domain import Systems, table_registry
 
 @pytest.fixture(scope="module")
 def session():
-    engine = create_engine("sqlite:///database.db")
+    engine = create_engine("sqlite:///database.sqlite3")
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
@@ -22,7 +22,7 @@ def api_client():
     return TestClient(app)
 
 
-@pytest.fixture
+@pytest.fixture()
 def create_system(session):
     item = session.scalar(
         select(Systems).where(
