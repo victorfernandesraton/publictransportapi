@@ -1,14 +1,11 @@
 from typing import List, Optional
 
 from decouple import config
-from fastapi import BackgroundTasks, Depends, FastAPI
+from fastapi import Depends, FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from publictransportapi.domain import Source, Systems, table_registry
-
-# TODO: dynamic import using file name and register
-from publictransportapi.source_extractor.salvador_ba_integra import SourceExtractor
 
 app = FastAPI()
 engine = create_engine(config("DATABASE_URL"))  # Replace with your database URL
@@ -67,17 +64,3 @@ async def get_sources(
     query = db.query(Source).filter(Source.system_id == system_id)
 
     return query.offset(skip).limit(limit).all()
-
-
-@app.post("/source")
-async def create_source(
-    source: Source, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
-):
-    system = db.query(Systems).filter(Systems.id == source.system_id).first()
-    if not system:
-        raise Exception(f"System with id {source.system_id} not found")
-
-    service = SourceExtractor(db, system)
-    source = service.save_source()
-    background_tasks.add_task(service.save_transport_routes, source)
-    return source

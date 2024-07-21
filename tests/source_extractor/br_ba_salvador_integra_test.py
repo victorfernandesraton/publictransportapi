@@ -3,7 +3,7 @@ from hashlib import sha256
 from sqlalchemy import select
 
 from publictransportapi.domain import Source, TransportRoutes, TransportStops
-from publictransportapi.source_extractor.salvador_ba_integra import SourceExtractor
+from publictransportapi.source_extractor.br_ba_salvador_integra import SourceExtractor
 
 
 def test_download_source(session, create_system):

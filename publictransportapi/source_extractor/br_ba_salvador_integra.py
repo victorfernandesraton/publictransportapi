@@ -11,11 +11,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from publictransportapi.domain import Source, Systems, TransportRoutes, TransportStops
+from publictransportapi.source_extractor.extractor import SourceExtractorService
 
 TOTAL_COLUMNS = 2
 
 
-class SourceExtractor:
+class SourceExtractor(SourceExtractorService):
     url = "https://www.integrasalvador.com.br/wp-content/themes/integra/img/ITINERARIO_ONIBUS.pdf"
     data = bytes()
 
