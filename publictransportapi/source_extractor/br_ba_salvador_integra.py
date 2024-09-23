@@ -106,25 +106,17 @@ class SourceExtractor(SourceExtractorService):
             if not result:
                 raise Exception(f"Invalid route: {route}")
             transport_routes = TransportRoutes(
-                code=int(result.group(1)),
-                label=route,
-                source_id=source.id,
+                code=int(result.group(1)), label=route, source_id=source.id
             )
             self.session.add(transport_routes)
             self.session.commit()
 
-        self.session.begin()
-        count = 0
-        for stop in stops:
-            try:
+            self.session.begin()
+            for idx, stop in enumerate(stops):
                 transport_stops = TransportStops(
                     label=stop,
-                    order=count,
+                    order=idx,
                     route_id=transport_routes.id,
                 )
-                count += 1
                 self.session.add(transport_stops)
-            except Exception as e:
-                self.session.rollback()
-                raise e
-        self.session.commit()
+            self.session.commit()

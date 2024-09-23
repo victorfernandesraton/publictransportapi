@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from sqlalchemy.orm import Session
 
-from publictransportapi.domain import Source, Systems
+from ..domain import Source, Systems
 
 
 class SourceExtractorService(ABC):
@@ -31,12 +31,12 @@ class Extractor:
 
         module = importlib.import_module(module_name)
 
-        extractor_cls = getattr(
-            module, "SourceExtractor"
-        )  # Substitua 'Classe' pelo nome da classe que você quer carregar
+        extractor_cls = getattr(module, "SourceExtractor")
 
-        # Instancia a classe
         extractor = extractor_cls(self.session, self.system)
 
-        # Retorna o objeto instanciado
         return extractor
+
+    def execute(self):
+        source = self.extractor.save_source()
+        self.extractor.save_transport_routes(source)

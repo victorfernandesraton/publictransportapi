@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from publictransportapi.domain import Source, Systems, table_registry
 
 app = FastAPI()
-engine = create_engine(config("DATABASE_URL"))  # Replace with your database URL
+engine = create_engine(config("DATABASE_URL"))
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 table_registry.metadata.create_all(bind=engine)
 

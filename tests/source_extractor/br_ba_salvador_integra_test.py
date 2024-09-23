@@ -19,7 +19,6 @@ def test_download_source(session, create_system):
     assert result.system_id == system.id
 
 
-# @pytest.mark.skip("Not implemented")
 def test_download_transport_routes(session, create_system):
     system = create_system
 

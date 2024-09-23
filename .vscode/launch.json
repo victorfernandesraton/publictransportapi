@@ -13,7 +13,21 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
+        },
+        {
+            "name": "Python: Testing CLI",
+            "type": "python",
+            "request": "launch",
+            "module": "publictransportapi.source_extractor.cli",
+            "args": [
+                "br",
+                "ba",
+                "salvador",
+                "integra"
+            ],
+            "python": "${workspaceFolder}/venv/bin/python",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
-
     ]
 }
