@@ -4,7 +4,7 @@ from decouple import config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from domain import Systems, table_registry
+from publictransportapi.domain import Systems, table_registry
 from publictransportapi.source_extractor.extractor import Extractor
 
 engine = create_engine(config("DATABASE_URL"))
@@ -33,17 +33,9 @@ if __name__ == "__main__":
     )
 
     if query.count() == 0:
-        system = Systems(
-            name=parsed_args.system,
-            country=parsed_args.country,
-            state=parsed_args.state,
-            city=parsed_args.city,
-        )
-        db.add(system)
-        db.commit()
-        db.refresh(system)
-    else:
-        system = query.first()
+        raise Exception("System not found")
+
+    system = query.first()
 
     extractor = Extractor(db, system)
     extractor.execute()

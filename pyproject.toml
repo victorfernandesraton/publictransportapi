@@ -45,3 +45,4 @@ run = { cmd = "uvicorn publictransportapi.app:app --reload", help = "Run the API
 lint = { cmd = "ruff check . && ruff check --diff", help = "Run the linter" }
 format = {cmd= "ruff check . --fix && ruff format .", help = "Run the formatter"}
 test = {cmd= "pytest .", help = "Run the tests"}
+extract = {cmd="python -m publictransportapi.source_extractor.cli", help="Extract data from source"}

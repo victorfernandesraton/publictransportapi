@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from sqlalchemy.orm import Session
 
-from ..domain import Source, Systems
+from publictransportapi.domain import Source, Systems
 
 
 class SourceExtractorService(ABC):
